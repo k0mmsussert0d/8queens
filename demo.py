@@ -1,18 +1,19 @@
-from eightqueens.eightqueens import find_path
-from gui.gui import visualize_search
 from multiprocessing import Process, Queue
+
+from eightqueens import eightqueens
 
 
 def eight_queens(n: int, visualize: bool = False):
     if visualize:
+        from gui import gui
         q = Queue()
-        visualization = Process(target=visualize_search, args=(n, (q),))
+        visualization = Process(target=gui.visualize_search, args=(n, (q),))
         visualization.daemon = True
         visualization.start()
     else:
         q = None
 
-    res = find_path(n, events_queue=q)
+    res = eightqueens.find_path(n, events_queue=q)
 
     if visualize:
         visualization.join()

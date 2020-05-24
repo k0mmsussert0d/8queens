@@ -1,7 +1,9 @@
-import const
-import pygame
 import sys
 from multiprocessing import Queue
+
+import pygame
+
+from . import const
 
 
 def visualize_search(size: int, event_queue: Queue = None):
