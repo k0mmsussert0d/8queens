@@ -47,6 +47,7 @@ def find_path(n: int, events_queue: Queue = None):
             for i, row in enumerate(col):
                 if row:
                     print(len(col) - i, end='')
+        print('\n')
 
     def solve(board, col):
         if count_queens(board) == n:
