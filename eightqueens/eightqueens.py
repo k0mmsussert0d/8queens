@@ -1,8 +1,7 @@
 from multiprocessing import Queue
 
 
-def find_path(n: int, events_queue: Queue = None):
-
+def find_path(n: int, find_all: bool = False, events_queue: Queue = None):
     def get_empty_board(size: int):
         """Returns 2D n*n array, each value initialized with false"""
         return [[False for i in range(size)] for j in range(size)]
@@ -53,19 +52,22 @@ def find_path(n: int, events_queue: Queue = None):
         if count_queens(board) == n:
             if events_queue:
                 events_queue.put({'board': board})
-                events_queue.put({'state': 'finished'})
             print_board(board)
             return board
+
+        res = False
 
         for row in range(len(board)):
             if is_field_safe(row, col, board):
                 board[row][col] = True
 
-                if solve(board, col + 1):
+                res = solve(board, col + 1) or res
+                if res and not find_all:
                     return True
 
                 board[row][col] = False
 
         return False
 
-    return solve(get_empty_board(n), 0)
+    solve(get_empty_board(n), 0)
+    events_queue.put({'state': 'finished'})

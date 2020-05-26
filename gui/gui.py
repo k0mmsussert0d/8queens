@@ -7,7 +7,6 @@ from . import const
 
 
 def visualize_search(size: int, event_queue: Queue = None):
-
     def get_optimal_tile_size(grid_size, initial_tile_size):
         info = pygame.display.Info()
         tile_size = initial_tile_size
@@ -34,6 +33,11 @@ def visualize_search(size: int, event_queue: Queue = None):
                 tile = pygame.Rect(row * const.TILE_SIZE, col * const.TILE_SIZE, const.TILE_SIZE, const.TILE_SIZE)
                 pygame.draw.rect(surface, get_color_for_tile(row, col), tile)
 
+    def draw_set(surface, tiles_count, tile_size, board):
+        draw_grid(surface, tile_size)
+        [mark_field(surface, row, col, tile_size) for col in range(tiles_count) for row in range(tiles_count) if
+         board[row][col]]
+
     def mark_field(surface, row, col, tile_size):
         x_pos = col * tile_size + tile_size / 2
         y_pos = row * tile_size + tile_size / 2
@@ -42,24 +46,28 @@ def visualize_search(size: int, event_queue: Queue = None):
 
     def game_loop(surface, tiles_count, tile_size):
         poll_events = True
+        first_drawn = False
+        sets = []
+        i = 0
+
         draw_grid(surface, tile_size)
+
         while True:
             event = pygame.event.poll() if poll_events else pygame.event.wait()
             if event.type == pygame.NOEVENT:
-                if event_queue is not None:
-                    if event_queue.qsize() > 0:
-                        new_event = event_queue.get()
-                        if 'board' in new_event:
-                            draw_grid(surface, tile_size)
-                            board = new_event['board']
-                            for col in range(tiles_count):
-                                for row in range(tiles_count):
-                                    if board[row][col] is True:
-                                        mark_field(surface, row, col, tile_size)
-                                        pygame.time.wait(10)
-                        elif 'state' in new_event:
-                            if new_event['state'] == 'finished':
-                                poll_events = False
+                if event_queue is not None and event_queue.qsize() > 0:
+                    new_event = event_queue.get()
+                    if 'board' in new_event:
+                        if first_drawn:
+                            new_set = new_event.get('board')
+                            if new_set not in sets:  # discard improperly removed items
+                                sets.append(new_event.get('board'))
+                        else:
+                            draw_set(surface, tiles_count, tile_size, new_event.get('board'))
+                            first_drawn = True
+                    elif 'state' in new_event:
+                        if new_event['state'] == 'finished':
+                            poll_events = False
             elif event.type == pygame.QUIT:
                 pygame.quit()
                 sys.exit()
@@ -67,6 +75,14 @@ def visualize_search(size: int, event_queue: Queue = None):
                 if event.key == pygame.K_ESCAPE:
                     pygame.quit()
                     sys.exit()
+                elif event.key == pygame.K_LEFT:
+                    if i > 0 and len(sets) > 0:
+                        i -= 1
+                        draw_set(surface, tiles_count, tile_size, sets[i])
+                elif event.key == pygame.K_RIGHT:
+                    if i < len(sets) - 1:
+                        i += 1
+                        draw_set(surface, tiles_count, tile_size, sets[i])
 
     pygame.display.init()
     tile_size = get_optimal_tile_size(size, const.TILE_SIZE)
